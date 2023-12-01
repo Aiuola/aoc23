@@ -13,15 +13,21 @@ func check(e error) {
 }
 
 func main() {
+	allPtr := flag.Bool("all", false, "Run all days")
 	dirsPtr := flag.Bool("dirs", false, "Create directories and empty files for input")
-
+	dayPtr := flag.Int("day", 0, "Day to execute")
 	flag.Parse()
 
-	fmt.Println("dirs:", *dirsPtr)
-
-	if *dirsPtr == true {
+	if *dirsPtr {
 		generateDirs()
 	}
+
+	if *dayPtr == 0 {
+		fmt.Println("No day specified please provide the day you want to execute")
+		return
+	}
+
+	fmt.Printf("Chosen day %d\nRun all: %t\n", *dayPtr, *allPtr)
 }
 
 func day1() {
