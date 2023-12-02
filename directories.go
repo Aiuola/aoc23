@@ -22,6 +22,16 @@ func directoryExists(path string) (bool, error) {
 
 const basePath string = "input/days"
 
+func generateInputPaths() [50]string {
+	var paths [25 * 2]string
+	for i := 0; i < 25; i++ {
+		dayDir := fmt.Sprintf("%s/%d", basePath, i+1)
+		paths[i*2] = fmt.Sprintf("%s/example.txt", dayDir)
+		paths[i*2+1] = fmt.Sprintf("%s/input.txt", dayDir)
+	}
+	return paths
+}
+
 func generateDirs() {
 	b, err := directoryExists(basePath)
 	check(err)
@@ -39,7 +49,7 @@ func generateDirs() {
 	}
 
 	for i := 0; i < 25; i++ {
-		dayDir := fmt.Sprintf("%s/%d", basePath, i)
+		dayDir := fmt.Sprintf("%s/%d", basePath, i+1)
 		err := os.Mkdir(dayDir, 0755)
 		check(err)
 		createEmptyFile(fmt.Sprintf("%s/example.txt", dayDir))
