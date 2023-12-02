@@ -22,12 +22,16 @@ func isInArray(target int, arr []int) bool {
 	return false
 }
 
-func printArray(arr []int) {
-	res := "{ "
-	for _, val := range arr {
-		res = fmt.Sprintf("%s, %d", res, val)
+func stringRepresentation(arr []int) string {
+	res := "{"
+	for i, val := range arr {
+		if i == len(arr)-1 {
+			res = fmt.Sprintf("%s%d", res, val)
+			continue
+		}
+		res = fmt.Sprintf("%s%d, ", res, val)
 	}
-	res = fmt.Sprintf("%s }", res)
+	return fmt.Sprintf("%s}", res)
 }
 
 func main() {
@@ -47,29 +51,28 @@ func main() {
 	}
 
 	if !isInArray(*partPtr, validParts) {
-		panic(fmt.Sprintf("%d is not in the valid parts array", *partPtr))
+		panic(fmt.Sprintf("%d is not a valid part number, each day has only 2 parts"+
+			"\nAvaiaible inputs are: %s", *partPtr, stringRepresentation(validParts)))
 	}
 
-	paths := generateInputPaths()
+	inputs := generateInputPaths()
 
-	switch *partPtr {
-	case 0:
-
-	}
-
-	fmt.Printf("Chosen day %d, run all: %t\n", *dayPtr, *allPtr)
+	fmt.Printf("Chosen day %d part %d, run all: %t\n", *dayPtr, *partPtr, *allPtr)
 
 	var testResult int
 	var mainResult int
+	var firstPart = *partPtr == 0 || *partPtr == 1
+	var secondPart = *partPtr == 0 || *partPtr == 2
 	switch *dayPtr {
 	case 1:
-		if *partPtr == 0 || *partPtr == 1 {
-			testResult = day1FirstPart(paths[*dayPtr-1])
-			mainResult = day1FirstPart(paths[*dayPtr])
+		var dayInput = inputs[*dayPtr-1]
+		if firstPart {
+			testResult = day1FirstPart(dayInput.exampleOne)
+			mainResult = day1FirstPart(dayInput.mainInput)
 		}
-		if *partPtr == 0 || *partPtr == 2 {
-			testResult = day1FirstPart(paths[*dayPtr-1])
-			mainResult = day1FirstPart(paths[*dayPtr])
+		if secondPart {
+			testResult = day1SecondPart(dayInput.exampleOne)
+			mainResult = day1SecondPart(dayInput.mainInput)
 		}
 	}
 

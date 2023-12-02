@@ -20,16 +20,36 @@ func directoryExists(path string) (bool, error) {
 	}
 }
 
-const basePath string = "input/days"
+const (
+	nDays    = 25
+	basePath = "input/days"
+)
 
-func generateInputPaths() [50]string {
-	var paths [25 * 2]string
-	for i := 0; i < 25; i++ {
-		dayDir := fmt.Sprintf("%s/%d", basePath, i+1)
-		paths[i*2] = fmt.Sprintf("%s/example.txt", dayDir)
-		paths[i*2+1] = fmt.Sprintf("%s/input.txt", dayDir)
+type dayInput struct {
+	exampleOne string
+	exampleTwo string
+	mainInput  string
+}
+
+func newDayInput(exampleOne string, exampleTwo string, mainInput string) *dayInput {
+	return &dayInput{
+		exampleOne: exampleOne,
+		exampleTwo: exampleTwo,
+		mainInput:  mainInput,
 	}
-	return paths
+}
+
+func generateInputPaths() [nDays]*dayInput {
+	var inputs [nDays]*dayInput
+	var exampleOne, exampleTwo, mainInput string
+	for i := 0; i < nDays; i++ {
+		dayDir := fmt.Sprintf("%s/%d", basePath, i+1)
+		exampleOne = fmt.Sprintf("%s/example1.txt", dayDir)
+		exampleTwo = fmt.Sprintf("%s/example2.txt", dayDir)
+		mainInput = fmt.Sprintf("%s/input.txt", dayDir)
+		inputs[i] = newDayInput(exampleOne, exampleTwo, mainInput)
+	}
+	return inputs
 }
 
 func generateDirs() {
@@ -48,12 +68,13 @@ func generateDirs() {
 		check(os.WriteFile(name, d, 0644))
 	}
 
-	for i := 0; i < 25; i++ {
-		dayDir := fmt.Sprintf("%s/%d", basePath, i+1)
-		err := os.Mkdir(dayDir, 0755)
+	inputPaths := generateInputPaths()
+	for i, inputPath := range inputPaths {
+		err := os.Mkdir(fmt.Sprintf("%s/%d", basePath, i+1), 0755)
 		check(err)
-		createEmptyFile(fmt.Sprintf("%s/example.txt", dayDir))
-		createEmptyFile(fmt.Sprintf("%s/input.txt", dayDir))
+		createEmptyFile(inputPath.exampleOne)
+		createEmptyFile(inputPath.exampleTwo)
+		createEmptyFile(inputPath.mainInput)
 	}
 
 	c, err := os.ReadDir(basePath)
@@ -82,6 +103,7 @@ func generateDirs() {
 
 	fmt.Printf("Visiting content of the main sub-dir %s\n", basePath)
 	err = filepath.WalkDir(basePath, visit)
+	check(err)
 }
 
 func visit(path string, d fs.DirEntry, err error) error {
