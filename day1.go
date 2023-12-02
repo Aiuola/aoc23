@@ -27,7 +27,7 @@ func initMap() {
 	stringToInt["nine"] = 9
 }
 
-func day1FirstPart(path string) int {
+func day1PartOne(path string) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 
@@ -86,7 +86,7 @@ func updateDigits(words [][]byte, firstDigit int, lastDigit int, newDigit int) (
 	return firstDigit, newDigit
 }
 
-func day1SecondPart(path string) int {
+func day1PartTwo(path string) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 	initMap()

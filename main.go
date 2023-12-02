@@ -34,6 +34,11 @@ func stringRepresentation(arr []int) string {
 	return fmt.Sprintf("%s}", res)
 }
 
+type Day struct {
+	partOne func(string) int
+	partTwo func(string) int
+}
+
 func main() {
 	dirsPtr := flag.Bool("dirs", false, "Create directories and empty files for input")
 	dayPtr := flag.Int("day", 0, "Day to execute")
@@ -57,30 +62,49 @@ func main() {
 
 	inputs := generateInputPaths()
 
-	fmt.Printf("Chosen day %d part %d, debug: %t\n", *dayPtr, *partPtr, *testPtr)
+	fmt.Printf("Chosen day %d part %d, test only: %t\n", *dayPtr, *partPtr, *testPtr)
 
 	var testResult int
 	var mainResult int
+	var day Day
 	var firstPart = *partPtr == 0 || *partPtr == 1
 	var secondPart = *partPtr == 0 || *partPtr == 2
+	var dayInput = inputs[*dayPtr-1]
 	switch *dayPtr {
 	case 1:
-		var dayInput = inputs[*dayPtr-1]
-		if firstPart {
-			testResult = day1FirstPart(dayInput.exampleOne)
-			if *testPtr {
-				break
-			}
-			mainResult = day1FirstPart(dayInput.mainInput)
+		day = Day{
+			partOne: func(s string) int {
+				return day1PartOne(s)
+			},
+			partTwo: func(s string) int {
+				return day1PartTwo(s)
+			},
 		}
-		if secondPart {
-			testResult = day1SecondPart(dayInput.exampleTwo)
-			if *testPtr {
-				break
-			}
-			mainResult = day1SecondPart(dayInput.mainInput)
+		break
+	case 2:
+		day = Day{
+			partOne: func(s string) int {
+				return day2partOne(s)
+			},
+			partTwo: func(s string) int {
+				return day2partTwo(s)
+			},
 		}
+		break
 	}
 
-	fmt.Printf("Test result: %d\nMain result: %d\n", testResult, mainResult)
+	if firstPart {
+		testResult = day.partOne(dayInput.exampleOne)
+		if !*testPtr {
+			mainResult = day.partOne(dayInput.mainInput)
+		}
+		fmt.Printf("Test result: %d\nMain result: %d\n", testResult, mainResult)
+	}
+	if secondPart {
+		testResult = day.partTwo(dayInput.exampleTwo)
+		if !*testPtr {
+			mainResult = day.partTwo(dayInput.mainInput)
+		}
+		fmt.Printf("Test result: %d\nMain result: %d\n", testResult, mainResult)
+	}
 }
