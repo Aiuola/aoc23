@@ -35,10 +35,10 @@ func stringRepresentation(arr []int) string {
 }
 
 func main() {
-	allPtr := flag.Bool("all", false, "Run all days")
 	dirsPtr := flag.Bool("dirs", false, "Create directories and empty files for input")
 	dayPtr := flag.Int("day", 0, "Day to execute")
 	partPtr := flag.Int("part", 0, "What part of the day do you want to execute")
+	testPtr := flag.Bool("test", false, "Should only tests be run")
 	flag.Parse()
 
 	if *dirsPtr {
@@ -57,7 +57,7 @@ func main() {
 
 	inputs := generateInputPaths()
 
-	fmt.Printf("Chosen day %d part %d, run all: %t\n", *dayPtr, *partPtr, *allPtr)
+	fmt.Printf("Chosen day %d part %d, debug: %t\n", *dayPtr, *partPtr, *testPtr)
 
 	var testResult int
 	var mainResult int
@@ -68,10 +68,16 @@ func main() {
 		var dayInput = inputs[*dayPtr-1]
 		if firstPart {
 			testResult = day1FirstPart(dayInput.exampleOne)
+			if *testPtr {
+				break
+			}
 			mainResult = day1FirstPart(dayInput.mainInput)
 		}
 		if secondPart {
-			testResult = day1SecondPart(dayInput.exampleOne)
+			testResult = day1SecondPart(dayInput.exampleTwo)
+			if *testPtr {
+				break
+			}
 			mainResult = day1SecondPart(dayInput.mainInput)
 		}
 	}
