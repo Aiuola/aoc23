@@ -14,15 +14,17 @@ type Cubes struct {
 	blue  int
 }
 
-func printCubes(cubes *Cubes) string {
-	return fmt.Sprintf("{ r - %d g - %d b - %d }", cubes.red, cubes.green, cubes.blue)
+var maxCubes = Cubes{
+	red:   12,
+	green: 13,
+	blue:  14,
 }
 
 func NewCubes() *Cubes {
 	return &Cubes{red: 0, green: 0, blue: 0}
 }
 
-func addCube(cubes *Cubes, size int, color string) {
+func (cubes *Cubes) AddCube(size int, color string) {
 	switch color {
 	case "red":
 		if cubes.red < size {
@@ -44,16 +46,18 @@ func addCube(cubes *Cubes, size int, color string) {
 	}
 }
 
-func nCubesPossible(gameCubes *Cubes) bool {
-	return gameCubes.red <= maxCubes.red &&
-		gameCubes.green <= maxCubes.green &&
-		gameCubes.blue <= maxCubes.blue
+func (cubes Cubes) LowerThanMax() bool {
+	return cubes.red <= maxCubes.red &&
+		cubes.green <= maxCubes.green &&
+		cubes.blue <= maxCubes.blue
 }
 
-var maxCubes = Cubes{
-	red:   12,
-	green: 13,
-	blue:  14,
+func (cubes Cubes) Power() int {
+	return cubes.red * cubes.blue * cubes.green
+}
+
+func (cubes Cubes) Print() string {
+	return fmt.Sprintf("{ r - %d g - %d b - %d }", cubes.red, cubes.green, cubes.blue)
 }
 
 func day2partOne(path string) int {
@@ -72,9 +76,9 @@ func day2partOne(path string) int {
 			panic(fmt.Sprintf("Couldn't remove prefix from %s", line))
 		}
 
-		cubes = cubesShownInGame(line, i)
-		fmt.Printf("\nFrom line: %s\nI got cube %s\n", line, printCubes(cubes))
-		if nCubesPossible(cubes) {
+		cubes = cubesShownInGame(line)
+		fmt.Printf("\nFrom line: %s\nI got cube %s\n", line, cubes.Print())
+		if cubes.LowerThanMax() {
 			fmt.Println("Which is valid!")
 			aggregator = aggregator + i + 1
 		}
@@ -83,7 +87,7 @@ func day2partOne(path string) int {
 	return aggregator
 }
 
-func cubesShownInGame(line string, i int) *Cubes {
+func cubesShownInGame(line string) *Cubes {
 	var numberString string = ""
 	var parsedWord []int32 = nil
 	var color string
@@ -109,7 +113,7 @@ func cubesShownInGame(line string, i int) *Cubes {
 		if char == ',' || char == ';' {
 			color = string(parsedWord)
 			parsedWord = make([]int32, 0)
-			addCube(cubes, shownCubes, color)
+			cubes.AddCube(shownCubes, color)
 			continue
 		}
 
@@ -117,11 +121,31 @@ func cubesShownInGame(line string, i int) *Cubes {
 	}
 
 	color = string(parsedWord)
-	addCube(cubes, shownCubes, color)
+	cubes.AddCube(shownCubes, color)
 
 	return cubes
 }
 
 func day2partTwo(path string) int {
-	return len(path)
+	dat, err := os.ReadFile(path)
+	check(err)
+
+	lines := strings.Split(string(dat), "\n")
+	var cubes *Cubes
+	aggregator := 0
+	var found bool
+
+	for i, line := range lines {
+		line, found = strings.CutPrefix(line, fmt.Sprintf("Game %d: ", i+1))
+		if !found {
+			panic(fmt.Sprintf("Couldn't remove prefix from %s", line))
+		}
+
+		cubes = cubesShownInGame(line)
+		fmt.Printf("\nFrom line: %s\nI got cube %s\n", line, cubes.Print())
+
+		aggregator = aggregator + cubes.Power()
+	}
+
+	return aggregator
 }
