@@ -7,6 +7,8 @@ import (
 	"unicode"
 )
 
+// region Point
+
 type Point struct {
 	x, y int
 }
@@ -64,6 +66,10 @@ func (p Point) ToString() string {
 	return fmt.Sprintf("{x:%d y:%d}", p.x, p.y)
 }
 
+//endregion
+
+// region PartNumber
+
 type PartNumber struct {
 	area *Area
 	val  int
@@ -78,33 +84,71 @@ func NewPartNumber(area *Area, val int) *PartNumber {
 	return &PartNumber{area: area, val: val}
 }
 
+//endregion
+
+// region Area
+
 type Area struct {
 	upperRight, upperLeft, lowerRight, lowerLeft *Point
+}
+
+func (a Area) AnyUpper() *Point {
+	return a.upperLeft
+}
+
+func (a Area) AnyLower() *Point {
+	return a.lowerRight
+}
+
+func (a Area) AnyRight() *Point {
+	return a.upperRight
+}
+
+func (a Area) AnyLeft() *Point {
+	return a.upperLeft
 }
 
 func NewArea(upperRight *Point, upperLeft *Point, lowerRight *Point, lowerLeft *Point) *Area {
 	return &Area{upperRight: upperRight, upperLeft: upperLeft, lowerRight: lowerRight, lowerLeft: lowerLeft}
 }
 
+// IntersectsHorizontally /**
+// Even though we are not checking all points in the line,
+// it's assumed that the max length is 3 and thus checking for the middle point is unnecessary
+func (a Area) IntersectsHorizontally(line *Line) bool {
+	y := line.GetHorizon()
+	if y < a.AnyUpper().y || y > a.AnyLower().y {
+		return false
+	}
+	// Y is in range!
+
+	xStart, xEnd := line.getVertices()
+	if (xStart < a.AnyLeft().x || xStart > a.AnyRight().x) &&
+		(xEnd < a.AnyLeft().x || xEnd > a.AnyRight().x) {
+		return false
+	}
+	// at least one of the X's is in range!
+
+	return true
+}
+
 func (a Area) Contains(point *Point) bool {
 	x, y := point.GetCoords()
 
-	// Any left point
-	if x < a.upperLeft.x {
+	if x < a.AnyLeft().x {
 		return false
 	}
-	// Any right point
-	if x > a.upperRight.x {
+	if x > a.AnyRight().x {
 		return false
 	}
 	// X is in range!
 
 	// Any upper point
-	if y < a.upperRight.y {
+	if y < a.AnyUpper().y {
 		return false
 	}
 	// Any lower point
-	if y > a.lowerRight.y {
+	if y > a.AnyLower().y {
 		return false
 	}
 	// Y is in range!
@@ -113,10 +157,16 @@ func (a Area) Contains(point *Point) bool {
 }
 
 func (a Area) Print() {
-	fmt.Printf("\n%s - %s\n%s - %s\n",
+	fmt.Printf(a.ToString())
+}
+
+func (a Area) ToString() string {
+	return fmt.Sprintf("\n%s - %s\n%s - %s\n",
 		a.upperLeft.ToString(), a.upperRight.ToString(),
 		a.lowerLeft.ToString(), a.lowerRight.ToString())
 }
+
+//endregion
 
 func convertToNumber(bytes []byte) int {
 	val, err := strconv.Atoi(string(bytes[:]))
@@ -175,9 +225,6 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Point) {
 					convertToNumber(bytes),
 				),
 			)
-			if nBytes == 2 {
-				partNumbers[len(partNumbers)-1].Print()
-			}
 			bytes = make([]byte, 0)
 		}
 
@@ -195,8 +242,4 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Point) {
 	}
 
 	return partNumbers, symbols
-}
-
-func day3PartTwo(path string) int {
-	return len(path)
 }
