@@ -19,19 +19,39 @@ func (p Point) GetCoords() (int, int) {
 	return p.x, p.y
 }
 
-func (p Point) GenerateNeighbours() [3 * 3]*Point {
+func (p Point) GenerateArea() *Area {
 	origX, origY := p.GetCoords()
 	var x, y int
-	neighbours := make([]*Point, 0, 3*3)
+	bounds := make([]*Point, 0, 2*2)
 
-	for i := -1; i < 2; i++ {
+	for i := -1; i < 2; i += 2 {
 		y = origY + i
-		for j := -1; j < 2; j++ {
+		for j := -1; j < 2; j += 2 {
 			x = origX + i
-			neighbours = append(neighbours, NewPoint(x, y))
+			bounds = append(bounds, NewPoint(x, y))
 		}
 	}
-	return [9]*Point(neighbours)
+
+	return NewArea(bounds[0], bounds[1], bounds[2], bounds[3])
+}
+
+func (p Point) GenerateAreaBetween(point *Point) *Area {
+	if p.Equals(point) {
+		return p.GenerateArea()
+	}
+
+	bounds := make([]*Point, 0, 2*2)
+	smaller, bigger := p.CompareX(point)
+
+	x, y := smaller.GetCoords()
+	bounds = append(bounds, NewPoint(x-1, y-1))
+	bounds = append(bounds, NewPoint(x-1, y+1))
+
+	x, y = bigger.GetCoords()
+	bounds = append(bounds, NewPoint(x+1, y-1))
+	bounds = append(bounds, NewPoint(x+1, y+1))
+
+	return NewArea(bounds[0], bounds[1], bounds[2], bounds[3])
 }
 
 func (p Point) Equals(point *Point) bool {
@@ -39,31 +59,51 @@ func (p Point) Equals(point *Point) bool {
 		p.y == point.y
 }
 
-type PartNumber struct {
-	start  *Point
-	length int
-	val    int
-}
-
-func NewPartNumber(start *Point, length int, val int) *PartNumber {
-	return &PartNumber{start: start, length: length, val: val}
-}
-
-type Symbol struct {
-	affectedPoints [9]*Point
-}
-
-func NewSymbol(point *Point) *Symbol {
-	return &Symbol{affectedPoints: point.GenerateNeighbours()}
-}
-
-func (s Symbol) AdjacentTo(number *PartNumber) bool {
-	for _, point := range s.affectedPoints {
-		if point.Equals(number.start) {
-			return true
-		}
+func (p Point) CompareX(point *Point) (*Point, *Point) {
+	if p.x < point.x {
+		return &p, point
 	}
-	return false
+	return point, &p
+}
+
+func (p Point) ToString() string {
+	return fmt.Sprintf("{%d - %d}", p.x, p.y)
+}
+
+type PartNumber struct {
+	area *Area
+	val  int
+}
+
+func NewPartNumber(area *Area, val int) *PartNumber {
+	return &PartNumber{area: area, val: val}
+}
+
+type Area struct {
+	upperRight, upperLeft, lowerRight, lowerLeft *Point
+}
+
+func NewArea(upperRight *Point, upperLeft *Point, lowerRight *Point, lowerLeft *Point) *Area {
+	return &Area{upperRight: upperRight, upperLeft: upperLeft, lowerRight: lowerRight, lowerLeft: lowerLeft}
+}
+
+// TODO: bro idk it's late
+func (a Area) Intersects(other *Area) bool {
+	if a.upperRight.x < other.lowerLeft.x || other.upperRight.x < a.lowerRight.x {
+		return false
+	}
+
+	if a.upperRight.y < other.lowerLeft.y || other.upperRight.y < a.lowerLeft.y {
+		return false
+	}
+
+	return true
+}
+
+func (a Area) Print() {
+	fmt.Printf("\n%s - %s\n%s - %s\n",
+		a.upperLeft.ToString(), a.upperRight.ToString(),
+		a.lowerLeft.ToString(), a.lowerRight.ToString())
 }
 
 func convertToNumber(bytes []byte) int {
@@ -76,15 +116,19 @@ func day3PartOne(path string) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 
-	partNumbers, symbols := parseSchematic(dat)
+	partNumbers, symbolAreas := parseSchematic(dat)
+
+	for _, area := range symbolAreas {
+		area.Print()
+	}
 
 	var match bool
 	aggregator := 0
 
 	for _, number := range partNumbers {
 		match = false
-		for _, symbol := range symbols {
-			if symbol.AdjacentTo(number) {
+		for _, symbolArea := range symbolAreas {
+			if number.area.Intersects(symbolArea) {
 				match = true
 				break
 			}
@@ -94,19 +138,21 @@ func day3PartOne(path string) int {
 		}
 	}
 
-	return len(partNumbers) + len(symbols)
+	return aggregator
 }
 
-func parseSchematic(dat []byte) ([]*PartNumber, []*Symbol) {
+func parseSchematic(dat []byte) ([]*PartNumber, []*Area) {
 	partNumbers := make([]*PartNumber, 0)
-	symbols := make([]*Symbol, 0)
+	symbolAreas := make([]*Area, 0)
 
 	bytes := make([]byte, 0)
 	nBytes := 0
 
 	y := 0
+	x := -1
 
-	for x, b := range dat {
+	for _, b := range dat {
+		x++
 		if unicode.IsDigit(rune(b)) {
 			bytes = append(bytes, b)
 			continue
@@ -116,8 +162,7 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Symbol) {
 		if nBytes != 0 {
 			partNumbers = append(partNumbers,
 				NewPartNumber(
-					NewPoint(x, y),
-					nBytes,
+					NewPoint(x-nBytes, y).GenerateAreaBetween(NewPoint(x, y)),
 					convertToNumber(bytes),
 				),
 			)
@@ -125,6 +170,7 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Symbol) {
 		}
 
 		if b == '\n' {
+			x = -1
 			y++
 			continue
 		}
@@ -132,12 +178,11 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Symbol) {
 		if b == '.' {
 			continue
 		}
-		fmt.Printf("Found symbol %s\n", string(b))
-		symbols = append(symbols, NewSymbol(NewPoint(x, y)))
+		symbolAreas = append(symbolAreas, NewPoint(x, y).GenerateArea())
 		continue
 	}
 
-	return partNumbers, symbols
+	return partNumbers, symbolAreas
 }
 
 func day3PartTwo(path string) int {
