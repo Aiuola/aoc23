@@ -40,18 +40,17 @@ func (p Point) GenerateAreaBetween(point *Point) *Area {
 		return p.GenerateArea()
 	}
 
-	bounds := make([]*Point, 0, 2*2)
 	smaller, bigger := p.CompareX(point)
 
 	x, y := smaller.GetCoords()
-	bounds = append(bounds, NewPoint(x-1, y-1))
-	bounds = append(bounds, NewPoint(x-1, y+1))
+	upperLeft := NewPoint(x-1, y-1)
+	lowerLeft := NewPoint(x-1, y+1)
 
 	x, y = bigger.GetCoords()
-	bounds = append(bounds, NewPoint(x+1, y-1))
-	bounds = append(bounds, NewPoint(x+1, y+1))
+	upperRight := NewPoint(x+1, y-1)
+	lowerRight := NewPoint(x+1, y+1)
 
-	return NewArea(bounds[0], bounds[1], bounds[2], bounds[3])
+	return NewArea(upperRight, upperLeft, lowerRight, lowerLeft)
 }
 
 func (p Point) Equals(point *Point) bool {
@@ -67,12 +66,17 @@ func (p Point) CompareX(point *Point) (*Point, *Point) {
 }
 
 func (p Point) ToString() string {
-	return fmt.Sprintf("{%d - %d}", p.x, p.y)
+	return fmt.Sprintf("{x:%d y:%d}", p.x, p.y)
 }
 
 type PartNumber struct {
 	area *Area
 	val  int
+}
+
+func (n PartNumber) Print() {
+	fmt.Printf("\nFor %d:", n.val)
+	n.area.Print()
 }
 
 func NewPartNumber(area *Area, val int) *PartNumber {
@@ -87,15 +91,28 @@ func NewArea(upperRight *Point, upperLeft *Point, lowerRight *Point, lowerLeft *
 	return &Area{upperRight: upperRight, upperLeft: upperLeft, lowerRight: lowerRight, lowerLeft: lowerLeft}
 }
 
-// TODO: bro idk it's late
-func (a Area) Intersects(other *Area) bool {
-	if a.upperRight.x < other.lowerLeft.x || other.upperRight.x < a.lowerRight.x {
-		return false
-	}
+func (a Area) Contains(point *Point) bool {
+	x, y := point.GetCoords()
 
-	if a.upperRight.y < other.lowerLeft.y || other.upperRight.y < a.lowerLeft.y {
+	// Any left point
+	if x < a.upperLeft.x {
 		return false
 	}
+	// Any right point
+	if x > a.upperRight.x {
+		return false
+	}
+	// X is in range!
+
+	// Any upper point
+	if y < a.upperRight.y {
+		return false
+	}
+	// Any lower point
+	if y > a.lowerRight.y {
+		return false
+	}
+	// Y is in range!
 
 	return true
 }
@@ -116,10 +133,15 @@ func day3PartOne(path string) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 
-	partNumbers, symbolAreas := parseSchematic(dat)
+	partNumbers, symbols := parseSchematic(dat)
 
-	for _, area := range symbolAreas {
-		area.Print()
+	for _, symbol := range symbols {
+		fmt.Println(symbol.ToString())
+	}
+
+	fmt.Printf("Areas of number: \n")
+	for _, number := range partNumbers {
+		number.Print()
 	}
 
 	var match bool
@@ -127,8 +149,8 @@ func day3PartOne(path string) int {
 
 	for _, number := range partNumbers {
 		match = false
-		for _, symbolArea := range symbolAreas {
-			if number.area.Intersects(symbolArea) {
+		for _, symbol := range symbols {
+			if number.area.Contains(symbol) {
 				match = true
 				break
 			}
@@ -141,9 +163,9 @@ func day3PartOne(path string) int {
 	return aggregator
 }
 
-func parseSchematic(dat []byte) ([]*PartNumber, []*Area) {
+func parseSchematic(dat []byte) ([]*PartNumber, []*Point) {
 	partNumbers := make([]*PartNumber, 0)
-	symbolAreas := make([]*Area, 0)
+	symbols := make([]*Point, 0)
 
 	bytes := make([]byte, 0)
 	nBytes := 0
@@ -178,11 +200,11 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Area) {
 		if b == '.' {
 			continue
 		}
-		symbolAreas = append(symbolAreas, NewPoint(x, y).GenerateArea())
+		symbols = append(symbols, NewPoint(x, y))
 		continue
 	}
 
-	return partNumbers, symbolAreas
+	return partNumbers, symbols
 }
 
 func day3PartTwo(path string) int {
