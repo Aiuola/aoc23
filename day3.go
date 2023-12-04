@@ -20,19 +20,14 @@ func (p Point) GetCoords() (int, int) {
 }
 
 func (p Point) GenerateArea() *Area {
-	origX, origY := p.GetCoords()
-	var x, y int
-	bounds := make([]*Point, 0, 2*2)
+	x, y := p.GetCoords()
 
-	for i := -1; i < 2; i += 2 {
-		y = origY + i
-		for j := -1; j < 2; j += 2 {
-			x = origX + i
-			bounds = append(bounds, NewPoint(x, y))
-		}
-	}
+	upperLeft := NewPoint(x-1, y-1)
+	lowerLeft := NewPoint(x-1, y+1)
+	upperRight := NewPoint(x+1, y-1)
+	lowerRight := NewPoint(x+1, y+1)
 
-	return NewArea(bounds[0], bounds[1], bounds[2], bounds[3])
+	return NewArea(upperRight, upperLeft, lowerRight, lowerLeft)
 }
 
 func (p Point) GenerateAreaBetween(point *Point) *Area {
@@ -135,20 +130,12 @@ func day3PartOne(path string) int {
 
 	partNumbers, symbols := parseSchematic(dat)
 
-	for _, symbol := range symbols {
-		fmt.Println(symbol.ToString())
-	}
-
-	fmt.Printf("Areas of number: \n")
-	for _, number := range partNumbers {
-		number.Print()
-	}
-
 	var match bool
 	aggregator := 0
 
 	for _, number := range partNumbers {
 		match = false
+
 		for _, symbol := range symbols {
 			if number.area.Contains(symbol) {
 				match = true
@@ -184,10 +171,13 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Point) {
 		if nBytes != 0 {
 			partNumbers = append(partNumbers,
 				NewPartNumber(
-					NewPoint(x-nBytes, y).GenerateAreaBetween(NewPoint(x, y)),
+					NewPoint(x-nBytes, y).GenerateAreaBetween(NewPoint(x-1, y)),
 					convertToNumber(bytes),
 				),
 			)
+			if nBytes == 2 {
+				partNumbers[len(partNumbers)-1].Print()
+			}
 			bytes = make([]byte, 0)
 		}
 
@@ -200,8 +190,8 @@ func parseSchematic(dat []byte) ([]*PartNumber, []*Point) {
 		if b == '.' {
 			continue
 		}
+
 		symbols = append(symbols, NewPoint(x, y))
-		continue
 	}
 
 	return partNumbers, symbols
