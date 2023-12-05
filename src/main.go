@@ -101,6 +101,15 @@ func main() {
 			},
 		}
 		break
+	case 4:
+		day = Day{
+			partOne: func(s string) int {
+				return day4PartOne(s)
+			},
+			partTwo: func(s string) int {
+				return day4PartTwo(s)
+			},
+		}
 	}
 
 	if firstPart {
