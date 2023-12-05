@@ -42,7 +42,6 @@ func (s *SortedArray) Contains(val int) bool {
 
 	for low <= high {
 		mid = (low + high) / 2
-		//fmt.Printf("num-%d %d %d %d\n", val, high, mid, low)
 		if val == s.elements[mid] {
 			return true
 		}
