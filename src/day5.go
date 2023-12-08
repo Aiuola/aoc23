@@ -93,5 +93,50 @@ func parseEntry(line string) *Entry {
 }
 
 func day5PartTwo(path string) int {
-	return len(path)
+	dat, err := os.ReadFile(path)
+	check(err)
+
+	lines := strings.Split(string(dat), "\n")
+	//var mappedSeeds []*Range
+	seeds := parseSeedsRange(lines[0])
+	maps := parseMaps(lines[3:])
+
+	for _, m := range maps {
+		fmt.Printf("%s\n", m.ToString())
+	}
+
+	sum := 0
+	for _, seed := range seeds {
+		fmt.Printf("Numbers in range %s = %d\n", seed.ToString(), seed.NumbersInRange())
+		sum += seed.NumbersInRange()
+	}
+	fmt.Printf("In total: %d\n", sum)
+
+	/*for _, m := range maps {
+		mappedSeeds = make([]*Range, 0)
+		for i := 0; i < len(seeds); i++ {
+			mappedSeeds = append(mappedSeeds, m.MapRange(seeds[i])...)
+		}
+		seeds = mappedSeeds
+	}*/
+
+	lowest := seeds[0].start
+	for i := 1; i < len(seeds); i++ {
+		if seeds[i].start < lowest {
+			lowest = seeds[i].start
+		}
+	}
+
+	return lowest
+}
+
+func parseSeedsRange(line string) []*Range {
+	ungroupedSeeds := parseSeeds(line)
+
+	seeds := make([]*Range, 0)
+	for i := 0; i < len(ungroupedSeeds); i += 2 {
+		seeds = append(seeds, NewRange(ungroupedSeeds[i], ungroupedSeeds[i+1]))
+	}
+
+	return seeds
 }
