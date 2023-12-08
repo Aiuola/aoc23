@@ -58,5 +58,5 @@ func (s *SortedArray) Contains(val int) bool {
 }
 
 func (s *SortedArray) ToString() any {
-	return stringRepresentation(s.elements)
+	return arrToString(s.elements)
 }

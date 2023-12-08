@@ -22,7 +22,7 @@ func isInArray(target int, arr []int) bool {
 	return false
 }
 
-func stringRepresentation(arr []int) string {
+func arrToString(arr []int) string {
 	res := "{"
 	for i, val := range arr {
 		if i == len(arr)-1 {
@@ -57,7 +57,7 @@ func main() {
 
 	if !isInArray(*partPtr, validParts) {
 		panic(fmt.Sprintf("%d is not a valid part number, each day has only 2 parts"+
-			"\nAvaiaible inputs are: %s", *partPtr, stringRepresentation(validParts)))
+			"\nAvaiaible inputs are: %s", *partPtr, arrToString(validParts)))
 	}
 
 	inputs := generateInputPaths()
@@ -110,6 +110,19 @@ func main() {
 				return day4PartTwo(s)
 			},
 		}
+		break
+	case 5:
+		day = Day{
+			partOne: func(s string) int {
+				return day5PartOne(s)
+			},
+			partTwo: func(s string) int {
+				return day5PartTwo(s)
+			},
+		}
+		break
+	default:
+		panic(fmt.Sprintf("Unknown day number %d please provide a number within 0-25", *dayPtr))
 	}
 
 	if firstPart {
