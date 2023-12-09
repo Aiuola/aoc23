@@ -8,4 +8,4 @@ I wanted to learn for quite some time.
 
 ### When did I look up answers?
 
-- So far never... xD
+- Day 5 part 2

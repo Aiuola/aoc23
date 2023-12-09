@@ -8,8 +8,6 @@ import (
 	"unicode"
 )
 
-//func NewJokerHand(cards []int, bid int) *Hand {
-
 func day7PartOne(path string) int {
 	return mainDay(path, NewHand)
 }
@@ -24,7 +22,6 @@ func mainDay(path string, ctor func([]int, int) *Hand) int {
 	aggregator := 0
 	var modifier int
 	for i, hand := range hands {
-		//fmt.Printf("%s\n", hand.ToStringComparison())
 		modifier = len(hands) - i
 		aggregator += hand.bid * modifier
 	}

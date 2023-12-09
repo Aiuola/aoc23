@@ -141,6 +141,16 @@ func main() {
 			},
 		}
 		break
+	case 8:
+		day = Day{
+			partOne: func(s string) int {
+				return day8PartOne(s)
+			},
+			partTwo: func(s string) int {
+				return day8PartTwo(s)
+			},
+		}
+		break
 	default:
 		panic(fmt.Sprintf("Unknown day number %d please provide a number within 0-25", *dayPtr))
 	}
