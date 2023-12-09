@@ -27,50 +27,55 @@ func (m Map) MapValue(val int) int {
 	return mappedVal
 }
 
-// MapRange Objective = split the range in multiple arrays without
+// MapRange Objective = split the range in multiple sub-ranges without
 // changing the total number of numbers covered
 func (m Map) MapRange(r *Range) []*Range {
 	fmt.Printf("\nMapping range %s\n", r.ToString())
 	ranges := make([]*Range, 0)
-	match := false
-	var rangeStart int
 
-	for _, entry := range m.entries {
-		fmt.Printf("Analyzing entry:\n%s\n", entry.ToString())
+	for i, entry := range m.entries {
+		fmt.Printf("Entry:\n%s\n", entry.ToString())
 
-		// While we haven't found a start
-		if entry.mapRange.end > r.start && !match {
-			rangeStart = r.start
-			match = true
-		} else {
-			if !match {
-				continue
+		if !entry.mapRange.ContainsNumber(r.start) {
+			continue
+		}
+		// Any part of the range before matches
+		if r.start < entry.mapRange.start {
+			orig, newR := r.SplitAt(r.start)
+			r = newR
+			ranges = append(ranges, orig)
+		}
+
+		for j := i; j < len(m.entries); j++ {
+			// It's over
+			if m.entries[j].mapRange.end >= r.end {
+				lastRange := NewRangeEnd(
+					max(m.entries[j].mapRange.start, r.start),
+					r.end,
+				)
+				lastRange.Shift(m.entries[j].destination - m.entries[j].source)
+				ranges = append(ranges, lastRange)
+				// Since we have found the end, we can break
+				break
 			}
-			rangeStart = entry.mapRange.start
-		}
 
-		if entry.mapRange.end >= r.end {
-			lastRange := NewRangeEnd(rangeStart, r.end)
-			lastRange.Shift(entry.destination - entry.source)
-			ranges = append(ranges, lastRange)
-			// Since we have found the end, we can break
-			break
+			// The end was not found
+			mappedRange := NewRangeEnd(
+				m.entries[j].mapRange.start,
+				m.entries[j].mapRange.end,
+			)
+			mappedRange.Shift(entry.destination - entry.source)
+			ranges = append(ranges, mappedRange)
 		}
-
-		// The end was not found
-		ranges = append(ranges, NewRangeEnd(rangeStart, entry.mapRange.end))
 	}
 
-	// No matches found values remain unvaried
-	if len(ranges) == 0 {
-		// Partial match
-		if match {
-			highestEnd := m.entries[len(m.entries)-1].mapRange.end
-			ranges = append(ranges, NewRangeEnd(rangeStart, highestEnd))
-			ranges = append(ranges, NewRangeEnd(highestEnd+1, r.end))
-		} else {
-			ranges = append(ranges, r)
-		}
+	// Adding any reaming part of the range
+	highestHigh := m.entries[len(m.entries)-1].mapRange.end
+	if highestHigh < r.end {
+		ranges = append(ranges, NewRangeEnd(
+			highestHigh+1,
+			r.end,
+		))
 	}
 
 	return ranges
@@ -113,36 +118,6 @@ func (e Entry) TryToMap(val int) (bool, int) {
 	dif := val - e.mapRange.start
 
 	return true, e.destination + dif
-}
-
-func (e Entry) MapEntry(r *Range) ([]*Range, []*Range) {
-	// If we don't share any numbers, then just return the original range
-	if !e.mapRange.SharesAnyNumbers(r) {
-		ret := make([]*Range, 1)
-		ret = append(ret, r)
-		return make([]*Range, 0), ret
-	}
-
-	// If the mapping range is a superset, then map everything
-	if e.mapRange.IsASuperSet(r) {
-		ret := make([]*Range, 1)
-		r.Shift(e.source - e.destination)
-		ret = append(ret, r)
-		return make([]*Range, 0), ret
-	}
-
-	// If the range to be mapped is a superset of the mapping range,
-	// then 3 new ranges are going to be created
-	// before mapping -> mapped values -> after mapping
-	if r.IsASuperSet(e.mapRange) {
-		ret := r.SplitWith(e.mapRange)
-		ret[1].Shift(e.source - e.destination)
-		return make([]*Range, 0), ret
-	}
-
-	panic("Bro...")
-
-	return make([]*Range, 0), make([]*Range, 0)
 }
 
 func NewEntry(mapRange int, source int, target int) *Entry {
@@ -195,11 +170,11 @@ func (r *Range) SplitWith(other *Range) []*Range {
 	return ranges
 }
 
-func (r *Range) SplitAt(number int) []*Range {
-	ranges := make([]*Range, 3)
+func (r *Range) SplitAt(number int) (*Range, *Range) {
+	ranges := make([]*Range, 2)
 	ranges[0] = NewRangeEnd(r.start, number)
 	ranges[1] = NewRangeEnd(number+1, r.end)
-	return ranges
+	return ranges[0], ranges[1]
 }
 
 func (r *Range) ContainsNumber(number int) bool {
