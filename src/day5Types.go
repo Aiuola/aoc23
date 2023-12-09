@@ -30,24 +30,47 @@ func (m Map) MapValue(val int) int {
 // MapRange Objective = split the range in multiple arrays without
 // changing the total number of numbers covered
 func (m Map) MapRange(r *Range) []*Range {
-	var mappedRanges, stillUnMappedRanges, unMappedRanges, ranges []*Range
+	fmt.Printf("\nMapping range %s\n", r.ToString())
+	ranges := make([]*Range, 0)
+	match := false
+	var rangeStart int
 
 	for _, entry := range m.entries {
-		// For each entry, we need to know if it's no longer possible
-		// to map values
-		if unMappedRanges == nil {
-			unMappedRanges, mappedRanges = entry.MapEntry(r)
+		fmt.Printf("Analyzing entry:\n%s\n", entry.ToString())
+
+		// While we haven't found a start
+		if entry.mapRange.end > r.start && !match {
+			rangeStart = r.start
+			match = true
 		} else {
-			for _, unMappedRange := range unMappedRanges {
-				mappedRanges, stillUnMappedRanges = entry.MapEntry(unMappedRange)
-				ranges = append(ranges, mappedRanges...)
+			if !match {
+				continue
 			}
+			rangeStart = entry.mapRange.start
 		}
-		ranges = append(ranges, mappedRanges...)
+
+		if entry.mapRange.end >= r.end {
+			lastRange := NewRangeEnd(rangeStart, r.end)
+			lastRange.Shift(entry.destination - entry.source)
+			ranges = append(ranges, lastRange)
+			// Since we have found the end, we can break
+			break
+		}
+
+		// The end was not found
+		ranges = append(ranges, NewRangeEnd(rangeStart, entry.mapRange.end))
 	}
 
-	if stillUnMappedRanges != nil {
-		return ranges
+	// No matches found values remain unvaried
+	if len(ranges) == 0 {
+		// Partial match
+		if match {
+			highestEnd := m.entries[len(m.entries)-1].mapRange.end
+			ranges = append(ranges, NewRangeEnd(rangeStart, highestEnd))
+			ranges = append(ranges, NewRangeEnd(highestEnd+1, r.end))
+		} else {
+			ranges = append(ranges, r)
+		}
 	}
 
 	return ranges
@@ -76,7 +99,7 @@ type Entry struct {
 func (e Entry) ToString() string {
 	dif := e.destination - e.source
 	return fmt.Sprintf(
-		"shifting by %d for range %s",
+		"%d for range %s",
 		dif,
 		e.mapRange.ToString(),
 	)
@@ -112,7 +135,7 @@ func (e Entry) MapEntry(r *Range) ([]*Range, []*Range) {
 	// then 3 new ranges are going to be created
 	// before mapping -> mapped values -> after mapping
 	if r.IsASuperSet(e.mapRange) {
-		ret := r.SplitInSubRanges(e.mapRange)
+		ret := r.SplitWith(e.mapRange)
 		ret[1].Shift(e.source - e.destination)
 		return make([]*Range, 0), ret
 	}
@@ -164,10 +187,21 @@ func (r *Range) Shift(amount int) {
 	r.end += amount
 }
 
-func (r *Range) SplitInSubRanges(other *Range) []*Range {
+func (r *Range) SplitWith(other *Range) []*Range {
 	ranges := make([]*Range, 3)
 	ranges[0] = NewRangeEnd(r.start, other.start)
 	ranges[1] = other
 	ranges[2] = NewRangeEnd(other.end, r.end)
 	return ranges
+}
+
+func (r *Range) SplitAt(number int) []*Range {
+	ranges := make([]*Range, 3)
+	ranges[0] = NewRangeEnd(r.start, number)
+	ranges[1] = NewRangeEnd(number+1, r.end)
+	return ranges
+}
+
+func (r *Range) ContainsNumber(number int) bool {
+	return number >= r.start || number <= r.end
 }

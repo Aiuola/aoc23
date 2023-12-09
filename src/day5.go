@@ -97,7 +97,7 @@ func day5PartTwo(path string) int {
 	check(err)
 
 	lines := strings.Split(string(dat), "\n")
-	//var mappedSeeds []*Range
+	var mappedSeeds []*Range
 	seeds := parseSeedsRange(lines[0])
 	maps := parseMaps(lines[3:])
 
@@ -112,13 +112,13 @@ func day5PartTwo(path string) int {
 	}
 	fmt.Printf("In total: %d\n", sum)
 
-	/*for _, m := range maps {
+	for _, m := range maps {
 		mappedSeeds = make([]*Range, 0)
 		for i := 0; i < len(seeds); i++ {
 			mappedSeeds = append(mappedSeeds, m.MapRange(seeds[i])...)
 		}
 		seeds = mappedSeeds
-	}*/
+	}
 
 	lowest := seeds[0].start
 	for i := 1; i < len(seeds); i++ {
