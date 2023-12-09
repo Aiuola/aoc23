@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -53,16 +54,58 @@ func parseNumbers(line string) []int {
 
 func waysToBeatRecord(time int, recordLength int) int {
 	var attemptLength int
-	cont := 0
+	sRange, eRange := -1, -1
+
 	for i := 1; i < time; i++ {
 		attemptLength = (time - i) * i
 		if attemptLength > recordLength {
-			cont++
+			sRange = i
+			break
 		}
 	}
-	return cont
+
+	for i := time - 1; i > 0; i-- {
+		attemptLength = (time - i) * i
+		if attemptLength > recordLength {
+			eRange = i
+			break
+		}
+	}
+
+	fmt.Printf("%d - %d\n", sRange, eRange)
+	return eRange - sRange + 1
 }
 
 func day6PartTwo(path string) int {
-	return len(path)
+	dat, err := os.ReadFile(path)
+	check(err)
+
+	lines := strings.Split(string(dat), "\n")
+
+	var raceTime int
+	var recordLength int
+
+	for i, line := range lines {
+		line = line[strings.IndexByte(line, ':')+2:]
+		line = strings.TrimSpace(line)
+
+		if i == 0 {
+			raceTime = parseNumber(line)
+		} else {
+			recordLength = parseNumber(line)
+		}
+	}
+
+	return waysToBeatRecord(raceTime, recordLength)
+}
+
+func parseNumber(line string) int {
+	currNumber := make([]int32, 0)
+	for _, char := range line {
+		if char == ' ' {
+			continue
+		}
+		currNumber = append(currNumber, char)
+	}
+	return intArrayToNumber(currNumber)
 }
