@@ -112,37 +112,6 @@ func (t ByType) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 
-func determineHandTypeJoker(cards []int, nJokers int) int {
-	oldType := determineHandType(cards)
-
-	switch oldType {
-	// There are two (or 1) buckets, and one of them contains jokers.
-	case FiveKind, FourKind, FullHouse:
-		return FiveKind
-	// I either have 3 or one jokers,
-	// Either way I am getting a four kind
-	case ThreeKind:
-		return FourKind
-	// If I have two jokers then I can go to a four kind
-	// Otherwise just a full house
-	case TwoPair:
-		if nJokers == 1 {
-			return FullHouse
-		}
-		return FourKind
-	// It doesn't matter if I have two or one jokers
-	// Either way the best I can get is a ThreeKind
-	case OnePair:
-		return ThreeKind
-	// :(
-	case HighCard:
-		return TwoPair
-	}
-
-	panic("Wait what?")
-	return -1
-}
-
 func numberOfJokers(cards []int) int {
 	count := 0
 	for _, card := range cards {
@@ -159,7 +128,7 @@ func NewJokerHand(cards []int, bid int) *Hand {
 		return NewHand(cards, bid)
 	}
 
-	handType := determineHandTypeJoker(cards, nJokers)
+	handType := determineHandTypeJoker(cards)
 	weakenJokers(cards)
 	return &Hand{cards: cards, bid: bid, hType: handType}
 }
@@ -174,4 +143,40 @@ func weakenJokers(cards []int) {
 
 func (h Hand) ToStringComparison() string {
 	return fmt.Sprintf("%d %s\n", h.hType, arrToString(h.cards))
+}
+
+func determineHandTypeJoker(cards []int) int {
+	jokerIndexes := make([]int, 0)
+	buckets := make(map[int]int)
+
+	for i, card := range cards {
+		if card == Joker {
+			jokerIndexes = append(jokerIndexes, i)
+			continue
+		}
+		buckets[card]++
+	}
+
+	bestType := -1
+	var tempType int
+	for k, _ := range buckets {
+		for _, index := range jokerIndexes {
+			cards[index] = k
+		}
+		tempType = determineHandType(cards)
+		if tempType > bestType {
+			bestType = tempType
+		}
+	}
+
+	for _, index := range jokerIndexes {
+		cards[index] = Joker
+	}
+
+	// This means that there are no buckets, hence a full hand of jokers
+	if bestType == -1 {
+		bestType = FiveKind
+	}
+
+	return bestType
 }
