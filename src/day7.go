@@ -8,16 +8,23 @@ import (
 	"unicode"
 )
 
+//func NewJokerHand(cards []int, bid int) *Hand {
+
 func day7PartOne(path string) int {
+	return mainDay(path, NewHand)
+}
+
+func mainDay(path string, ctor func([]int, int) *Hand) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 
-	hands := parseCards(dat)
+	hands := parseCards(dat, ctor)
 	sort.Sort(ByType(hands))
 
 	aggregator := 0
 	var modifier int
 	for i, hand := range hands {
+		//fmt.Printf("%s\n", hand.ToStringComparison())
 		modifier = len(hands) - i
 		aggregator += hand.bid * modifier
 	}
@@ -25,7 +32,7 @@ func day7PartOne(path string) int {
 	return aggregator
 }
 
-func parseCards(dat []byte) []*Hand {
+func parseCards(dat []byte, handCtor func([]int, int) *Hand) []*Hand {
 	var err error
 	hands := make([]*Hand, 0)
 
@@ -42,7 +49,7 @@ func parseCards(dat []byte) []*Hand {
 				check(err)
 				currNumber = make([]byte, 0)
 
-				hands = append(hands, NewHand(cards, bid))
+				hands = append(hands, handCtor(cards, bid))
 				cards = make([]int, 0)
 			}
 			parsingCards = !parsingCards
@@ -78,7 +85,7 @@ func mapToInt(b byte) int {
 		val = 12
 		break
 	case 'J':
-		val = 11
+		val = Joker
 		break
 	case 'T':
 		val = 10
@@ -90,5 +97,5 @@ func mapToInt(b byte) int {
 }
 
 func day7PartTwo(path string) int {
-	return len(path)
+	return mainDay(path, NewJokerHand)
 }
