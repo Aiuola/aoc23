@@ -22,7 +22,7 @@ func day8PartOne(path string) int {
 	for {
 		i = executeDirections(directions, nodes, i)
 		cont++
-		fmt.Printf("After the %d execution %s\n", cont, nodes[i])
+		fmt.Printf("After %d cycle executions %s\n", cont, nodes[i])
 		if nodes[i].val == "ZZZ" {
 			break
 		}
@@ -96,15 +96,70 @@ func executeDirections(directions Directions, nodes UnlinkedNodes, startingIndex
 			))
 		}
 		currIndex = newIndex
-		/*fmt.Printf(
-			"Moved to node %s - at index %d\n",
-			nodes[currIndex],
-			currIndex,
-		)*/
+		//fmt.Printf("Moved to node %s - at index %d\n", nodes[currIndex], currIndex)
 	}
 	return currIndex
 }
 
 func day8PartTwo(path string) int {
-	return len(path)
+	dat, err := os.ReadFile(path)
+	check(err)
+
+	lines := strings.Split(string(dat), "\n")
+	// Right = true / left = false
+	directions := parseDirections(lines[0])
+	nodes := parseNodes(lines[2:])
+	sort.Sort(nodes)
+
+	indexes := nodes.DetermineStartingNodeIndexes()
+	fmt.Printf("Starting %s\n", nodes.SubSlice(indexes))
+
+	solvedAt := findCycleWhereNodeIsAEndNode(directions, nodes, indexes)
+	return LCM(solvedAt[0], solvedAt[1], solvedAt...) * len(directions)
+}
+
+func findCycleWhereNodeIsAEndNode(directions Directions, nodes UnlinkedNodes, indexes []int) []int {
+	solvedAt := make([]int, 0)
+	var cycle int
+	var cycleIndex int
+
+	for _, index := range indexes {
+		cycle = 0
+		cycleIndex = index
+		for {
+			cycleIndex = executeDirections(directions, nodes, cycleIndex)
+			cycle++
+			if nodes[cycleIndex].val[2] == 'Z' {
+				fmt.Printf(
+					"Node[%d] %s solved at cycle %d (step %d)\n",
+					index,
+					nodes[index].val,
+					cycle,
+					cycle*len(directions),
+				)
+				solvedAt = append(solvedAt, cycle)
+				break
+			}
+		}
+	}
+	return solvedAt
+}
+
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
+	return result
 }

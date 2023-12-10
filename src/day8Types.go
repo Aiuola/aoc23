@@ -57,6 +57,24 @@ func (un UnlinkedNodes) Search(target string) int {
 	})
 }
 
+func (un UnlinkedNodes) DetermineStartingNodeIndexes() []int {
+	matches := make([]int, 0)
+	for i, node := range un {
+		if node.val[2] == 'A' {
+			matches = append(matches, i)
+		}
+	}
+	return matches
+}
+
+func (un UnlinkedNodes) SubSlice(indexes []int) UnlinkedNodes {
+	matches := make([]*UnlinkedNode, len(indexes))
+	for i, index := range indexes {
+		matches[i] = un[index]
+	}
+	return matches
+}
+
 type Direction bool
 
 func (i Direction) String() string {
