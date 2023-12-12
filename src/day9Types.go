@@ -7,7 +7,7 @@ type Sequences []Sequence
 func (s Sequences) String() string {
 	ret := "Sequences:"
 	for _, seq := range s {
-		ret = fmt.Sprintf("%s\n%s", ret, seq)
+		ret = fmt.Sprintf("%s\n%v", ret, seq)
 	}
 	return ret
 }
@@ -15,8 +15,10 @@ func (s Sequences) String() string {
 func (s Sequences) ExtrapolateSequences() int {
 	sum := 0
 	for _, sequence := range s {
-		k := sequence.GenerateSequences()
-		sum += len(k)
+		//generatedSequences := sequence.GenerateSequences()
+		prediction := sequence.ExtrapolatePrediction()
+		//fmt.Println(generatedSequences, "\n", prediction)
+		sum += prediction
 	}
 
 	return sum
@@ -25,9 +27,10 @@ func (s Sequences) ExtrapolateSequences() int {
 type Sequence []int
 
 func (s Sequence) String() string {
-	return fmt.Sprintf("%v", s[0:])
+	return fmt.Sprintf("%v", arrToString(s))
 }
 
+// GenerateSequences Only for visualization/debug
 func (s Sequence) GenerateSequences() Sequences {
 	a, b := s.IsMadeOfAllZeroes()
 	if a {
@@ -50,6 +53,27 @@ func (s Sequence) GenerateSequences() Sequences {
 	sequences = append(sequences, childSequence.GenerateSequences()...)
 
 	return sequences
+}
+
+func (s Sequence) ExtrapolatePrediction() int {
+	a, _ := s.IsMadeOfAllZeroes()
+	if a {
+		return 0
+	}
+
+	childSequence := make(Sequence, len(s)-1)
+	var prev int
+
+	for i, item := range s {
+		if i == 0 {
+			prev = item
+			continue
+		}
+		childSequence[i-1] = item - prev
+		prev = item
+	}
+
+	return s[len(s)-1] + childSequence.ExtrapolatePrediction()
 }
 
 func (s Sequence) IsMadeOfAllZeroes() (bool, Sequences) {
