@@ -6,11 +6,15 @@ import (
 )
 
 func day9PartOne(path string) int {
+	return coreDay9(path, false)
+}
+
+func coreDay9(path string, day2 bool) int {
 	dat, err := os.ReadFile(path)
 	check(err)
 
 	histories := parseHistories(dat)
-	return histories.ExtrapolateSequences()
+	return histories.ExtrapolateSequences(day2)
 }
 
 func parseHistories(dat []byte) Sequences {
@@ -39,5 +43,5 @@ func parseHistories(dat []byte) Sequences {
 }
 
 func day9PartTwo(path string) int {
-	return len(path)
+	return coreDay9(path, true)
 }

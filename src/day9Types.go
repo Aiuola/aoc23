@@ -12,12 +12,15 @@ func (s Sequences) String() string {
 	return ret
 }
 
-func (s Sequences) ExtrapolateSequences() int {
+func (s Sequences) ExtrapolateSequences(day2 bool) int {
 	sum := 0
+	var prediction int
 	for _, sequence := range s {
-		//generatedSequences := sequence.GenerateSequences()
-		prediction := sequence.ExtrapolatePrediction()
-		//fmt.Println(generatedSequences, "\n", prediction)
+		if day2 {
+			prediction = sequence.DiscoverHistory()
+		} else {
+			prediction = sequence.ExtrapolatePrediction()
+		}
 		sum += prediction
 	}
 
@@ -91,4 +94,25 @@ func (s Sequence) IsMadeOfAllZeroes() (bool, Sequences) {
 	}
 
 	return false, nil
+}
+
+func (s Sequence) DiscoverHistory() int {
+	a, _ := s.IsMadeOfAllZeroes()
+	if a {
+		return 0
+	}
+
+	childSequence := make(Sequence, len(s)-1)
+	var prev int
+
+	for i, item := range s {
+		if i == 0 {
+			prev = item
+			continue
+		}
+		childSequence[i-1] = item - prev
+		prev = item
+	}
+
+	return s[0] - childSequence.DiscoverHistory()
 }
