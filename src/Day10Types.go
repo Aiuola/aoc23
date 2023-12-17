@@ -74,23 +74,21 @@ func (p Pipe) NextIndexes(indexes *Indexes) *Indexes {
 	panic("Wait what...")
 }
 
-func (p Pipe) ExploreLoop(lines []string, indexes *Indexes) int {
+func (p Pipe) ExploreLoop(lines []string, indexes *Indexes) Loop {
 	nextPipe := &p
-	var nextIndexes *Indexes
-	counter := 0
+	loop := make([]*Index, 0)
 
 	for {
-		nextIndexes = nextPipe.NextIndexes(indexes)
-		nextPipe = charToPipeMap[lines[nextIndexes.i][nextIndexes.j]]
-		counter++
+		indexes = nextPipe.NextIndexes(indexes)
+		nextPipe = charToPipeMap[lines[indexes.i][indexes.j]]
+		loop = append(loop, indexes.GetCurrIndex())
 
 		if nextPipe.symbol == "S" {
-			if counter%2 == 1 {
+			if len(loop)%2 == 1 {
 				panic("Loop length was not dividable by two")
 			}
-			return counter / 2
+			return loop
 		}
-		indexes = nextIndexes
 	}
 }
 
@@ -109,3 +107,17 @@ func (i Indexes) Move(iAmount int, jAmount int) *Indexes {
 		i.i, i.j,
 	)
 }
+
+func (i Indexes) GetCurrIndex() *Index {
+	return NewIndex(i.i, i.j)
+}
+
+type Index struct {
+	i, j int
+}
+
+func NewIndex(i int, j int) *Index {
+	return &Index{i: i, j: j}
+}
+
+type Loop []*Index

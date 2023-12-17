@@ -6,6 +6,10 @@ import (
 )
 
 func day10PartOne(path string) int {
+	return len(day10Core(path)) / 2
+}
+
+func day10Core(path string) Loop {
 	dat, err := os.ReadFile(path)
 	check(err)
 
