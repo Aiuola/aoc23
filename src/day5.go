@@ -107,7 +107,7 @@ func day5PartTwo(path string) int {
 
 	sum := 0
 	for _, seed := range seeds {
-		fmt.Printf("Numbers in range %s = %d\n", seed.ToString(), seed.NumbersInRange())
+		fmt.Printf("Numbers in range %s = %d\n", seed, seed.NumbersInRange())
 		sum += seed.NumbersInRange()
 	}
 	fmt.Printf("In total: %d\n", sum)

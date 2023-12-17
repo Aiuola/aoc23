@@ -30,7 +30,7 @@ func (m Map) MapValue(val int) int {
 // MapRange Objective = split the range in multiple sub-ranges without
 // changing the total number of numbers covered
 func (m Map) MapRange(r *Range) []*Range {
-	fmt.Printf("\nMapping range %s\n", r.ToString())
+	fmt.Printf("\nMapping range %s\n", r)
 	ranges := make([]*Range, 0)
 
 	for i, entry := range m.entries {
@@ -106,7 +106,7 @@ func (e Entry) ToString() string {
 	return fmt.Sprintf(
 		"%d for range %s",
 		dif,
-		e.mapRange.ToString(),
+		e.mapRange,
 	)
 }
 
@@ -153,7 +153,10 @@ func (r *Range) IsASuperSet(other *Range) bool {
 	return r.start <= other.start && r.end >= other.end
 }
 
-func (r *Range) ToString() string {
+func (r *Range) String() string {
+	if r.NumbersInRange() == 2 {
+		return ""
+	}
 	return fmt.Sprintf("%d-%d", r.start, r.end)
 }
 
@@ -179,4 +182,8 @@ func (r *Range) SplitAt(number int) (*Range, *Range) {
 
 func (r *Range) ContainsNumber(number int) bool {
 	return number >= r.start || number <= r.end
+}
+
+func (r *Range) ContainsNumberExclusive(n int) bool {
+	return n > r.start && n < r.end
 }
